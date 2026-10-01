@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jyotish – daily sidereal guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070a16;--cy:#74e6f0;--vi:#9d8cff;--go:#f2cf8b;--tx:#e9ebf5;--mu:#8f95b2;--ln:rgba(116,230,240,.22);--gl:rgba(255,255,255,.045);color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;font:400 15px/1.6 Sora,system-ui,sans-serif;color:var(--tx);background:radial-gradient(900px 500px at 85% -10%,#2a1f5c 0,transparent 60%),radial-gradient(700px 500px at -10% 30%,#0b3a4a 0,transparent 60%),var(--bg);padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+h1{font-weight:200;font-size:30px;letter-spacing:.14em;margin:6px 0 2px}
+h1 small{font-size:12px;letter-spacing:.04em;color:var(--mu);margin-left:10px}
+h2{font-weight:400;font-size:18px;margin:0 0 8px;color:var(--cy)}
+nav{display:flex;gap:6px;margin:14px 0;overflow-x:auto}
+nav button,.btn{font:inherit;color:var(--tx);background:var(--gl);border:1px solid var(--ln);border-radius:999px;padding:7px 16px;cursor:pointer;white-space:nowrap;transition:.2s}
+nav button.on,.btn.pri{background:linear-gradient(90deg,rgba(116,230,240,.25),rgba(157,140,255,.3));border-color:var(--cy)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--go);outline-offset:2px}
+.card{background:var(--gl);border:1px solid var(--ln);border-radius:18px;padding:16px;margin-bottom:14px;backdrop-filter:blur(8px)}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.who{flex:1;min-width:170px}.who b{font-weight:600;font-size:17px}.who span{display:block;color:var(--mu);font-size:13px}
+.sig{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:20px;color:var(--go);border:1px solid var(--go);box-shadow:0 0 18px rgba(242,207,139,.25)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chips .btn.on{border-color:var(--go)}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{font-size:12px;color:var(--mu);display:flex;flex-direction:column;gap:3px}
+input,select{font:inherit;color:var(--tx);background:rgba(0,0,0,.35);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;width:100%}
+.full{grid-column:1/-1}.msg{font-size:12px;color:var(--go);min-height:18px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.score{font-size:34px;font-weight:200;color:var(--go)}
+.ch{width:100%;max-width:430px;display:block;margin:auto}
+.ch .sn{fill:var(--go);font-size:11px;text-anchor:middle}.ch .pl{fill:var(--tx);font-size:13px;text-anchor:middle}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-weight:400;color:var(--mu);text-align:left}th,td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.07)}
+.tbl{overflow-x:auto}
+.ok{color:#7ee8b0}.bad{color:#ff9d8a}.mid{color:var(--go)}
+.note{color:var(--mu);font-size:12px}
+p{margin:.4em 0}
+details summary{cursor:pointer;color:var(--cy)}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>JYOTISH<small>sidereal, Lahiri ayanamsha, whole-sign houses</small></h1>
+<nav id="tabs"><button data-t="today" class="on">Today</button><button data-t="chart">Kundali</button><button data-t="dasha">Dasha &amp; outlook</button></nav>
+<section id="entry" class="card"></section>
+<main>
+<div id="v-today"></div><div id="v-chart" hidden></div><div id="v-dasha" hidden></div>
+</main>
+<p class="note">Positions use compact analytical formulas (Sun, Moon and planets typically within a fraction of a degree; mean lunar node). Near sign, nakshatra or ascendant boundaries, cross-check with a Swiss Ephemeris tool. Predictions are classical rule-based reflections, not guarantees.</p>
+</div>
+<script>
+const $=s=>document.querySelector(s),R=Math.PI/180,nm=x=>((x%360)+360)%360,sn=x=>Math.sin(x*R),cs=x=>Math.cos(x*R);
+const SG=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const NK=['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishta','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
+const PN={Su:'Sun',Mo:'Moon',Ma:'Mars',Me:'Mercury',Ju:'Jupiter',Ve:'Venus',Sa:'Saturn',Ra:'Rahu',Ke:'Ketu'},PK=Object.keys(PN);
+const WD=['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
+
+/* ---------- astronomy ---------- */
+const EL={
+Su:[0,0,[282.9404,4.70935e-5],1,[.016709,-1.151e-9],[356.047,.9856002585]],
+Mo:[[125.1228,-.0529538083],5.1454,[318.0634,.1643573223],60.2666,.0549,[115.3654,13.0649929509]],
+Me:[[48.3313,3.24587e-5],[7.0047,5e-8],[29.1241,1.01444e-5],.387098,[.205635,5.59e-10],[168.6562,4.0923344368]],
+Ve:[[76.6799,2.4659e-5],[3.3946,2.75e-8],[54.891,1.38374e-5],.72333,[.006773,-1.302e-9],[48.0052,1.6021302244]],
+Ma:[[49.5574,2.11081e-5],[1.8497,-1.78e-8],[286.5016,2.92961e-5],1.523688,[.093405,2.516e-9],[18.6021,.5240207766]],
+Ju:[[100.4542,2.76854e-5],[1.303,-1.557e-7],[273.8777,1.64505e-5],5.20256,[.048498,4.469e-9],[19.895,.0830853001]],
+Sa:[[113.6634,2.3898e-5],[2.4886,-1.081e-7],[339.3939,2.97661e-5],9.55475,[.055546,-9.499e-9],[316.967,.0334442282]]};
+function xyz(p,d){const[N,i,w,a,e,M]=p.map(x=>Array.isArray(x)?x[0]+x[1]*d:x);
+ let E=M+e/R*sn(M)*(1+e*cs(M));for(let k=0;k<6;k++)E-=(E-e/R*sn(E)-M)/(1-e*cs(E));
+ const xv=a*(cs(E)-e),yv=a*Math.sqrt(1-e*e)*sn(E),u=Math.atan2(yv,xv)/R+w,r=Math.hypot(xv,yv);
+ return{x:r*(cs(N)*cs(u)-sn(N)*sn(u)*cs(i)),y:r*(sn(N)*cs(u)+cs(N)*sn(u)*cs(i)),u,M,w,N}}
+function raw(d){const S=xyz(EL.Su,d),Ls=nm(S.u),Ms=S.M,o={Su:Ls};
+ const Mo=xyz(EL.Mo,d),Mm=Mo.M,Lm=Mo.N+Mo.w+Mm,D=Lm-Ls,F=Lm-Mo.N;
+ o.Mo=nm(Math.atan2(Mo.y,Mo.x)/R-1.274*sn(Mm-2*D)+.658*sn(2*D)-.186*sn(Ms)-.059*sn(2*Mm-2*D)-.057*sn(Mm-2*D+Ms)+.053*sn(Mm+2*D)+.046*sn(2*D-Ms)+.041*sn(Mm-Ms)-.035*sn(D)-.031*sn(Mm+Ms)-.015*sn(2*F-2*D)+.011*sn(Mm-4*D));
+ const Mj=19.895+.0830853001*d,Mq=316.967+.0334442282*d;
+ for(const k of['Me','Ve','Ma','Ju','Sa']){const P=xyz(EL[k],d);let l=Math.atan2(P.y+S.y,P.x+S.x)/R;
+  if(k=='Ju')l+=-.332*sn(2*Mj-5*Mq-67.6)-.056*sn(2*Mj-2*Mq+21)+.042*sn(3*Mj-5*Mq+21)-.036*sn(Mj-2*Mq)+.022*cs(Mj-Mq)+.023*sn(2*Mj-3*Mq+52)-.016*sn(Mj-5*Mq-69);
+  if(k=='Sa')l+=.812*sn(2*Mj-5*Mq-67.6)-.229*cs(2*Mj-4*Mq-2)+.119*sn(Mj-2*Mq-3)+.046*sn(2*Mj-6*Mq-69)+.014*sn(Mj-3*Mq+32);
+  o[k]=nm(l)}
+ o.Ra=nm(125.1228-.0529538083*d);o.Ke=nm(o.Ra+180);return o}
+const jdOf=ms=>ms/864e5+2440587.5,ayan=jd=>23.85306+.0139691*(jd-2451545)/365.25;
+function sky(jd){const d=jd-2451543.5,a=ayan(jd),p=raw(d),q=raw(d+.5),o=raw(d-.5),L={},Rt={};
+ for(const k of PK){L[k]=nm(p[k]-a);Rt[k]=k=='Ra'||k=='Ke'||(k!='Su'&&k!='Mo'&&nm(q[k]-o[k]+180)-180<0)}
+ return{L,R:Rt,a}}
+function lagna(jd,lat,lon,a){const T=jd-2451545,th=nm(280.46061837+360.98564736629*T+lon),e=23.439291-.0130042*T/36525;
+ return nm(Math.atan2(cs(th),-(sn(th)*cs(e)+Math.tan(lat*R)*sn(e)))/R-a)}
+function tzOff(tz,ms){if(/^[+-]?\d+(\.\d+)?$/.test(tz))return+tz*60;
+ const f=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric'}),o={};
+ f.formatToParts(new Date(ms)).forEach(x=>o[x.type]=+x.value);
+ return(Date.UTC(o.year,o.month-1,o.day,o.hour,o.minute,o.second)-Math.floor(ms/1000)*1000)/6e4}
+function toUTC(p){const[y,m,d]=p.date.split('-').map(Number),[H,M]=p.time.split(':').map(Number),g=Date.UTC(y,m-1,d,H,M);
+ let u=g-tzOff(p.tz,g)*6e4;return g-tzOff(p.tz,u)*6e4}
+function natal(p){const ms=toUTC(p),jd=jdOf(ms),s=sky(jd);return{ms,jd,s,asc:lagna(jd,p.lat,p.lon,s.a)}}
+
+/* ---------- helpers ---------- */
+const sg=l=>Math.floor(l/30),nk=l=>Math.floor(l/(40/3)),pd=l=>Math.floor((l%(40/3))/(10/3))+1;
+const dm=x=>Math.floor(x%30)+'°'+String(Math.floor((x%1)*60)).padStart(2,'0')+'′';
+const fd=ms=>new Date(ms).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+const hs=(a,b)=>(a-b+12)%12+1;
+const HC=[[200,95],[100,38],[38,100],[95,200],[38,300],[100,362],[200,305],[300,362],[362,300],[305,200],[362,100],[300,38]];
+const SN=[[200,178],[100,86],[86,100],[178,200],[86,300],[100,314],[200,222],[300,314],[314,300],[222,200],[314,100],[300,86]];
+function chart(asc,items){let s='<svg viewBox="0 0 400 400" class="ch" role="img" aria-label="North Indian chart"><g fill="none" stroke="#74e6f0" stroke-width="1.2"><rect x="1" y="1" width="398" height="398"/><path d="M0 0L400 400M400 0L0 400M200 0L400 200L200 400L0 200Z"/></g>';
+ for(let h=0;h<12;h++){const g=(asc+h)%12,L=items[g]||[],rows=[];
+  s+=`<text x="${SN[h][0]}" y="${SN[h][1]}" class="sn">${g+1}</text>`;
+  for(let i=0;i<L.length;i+=2)rows.push(L.slice(i,i+2).join(' '));
+  rows.forEach((r,i)=>s+=`<text x="${HC[h][0]}" y="${HC[h][1]+(i-(rows.length-1)/2)*15+4}" class="pl">${r}</text>`)}
+ return s+'</svg>'}
+function items(s,asc,nav){const it={};(it[asc]=[]).push('Asc');
+ for(const k of PK){const l=s.L[k],g=nav?Math.floor(l/(10/3))%12:sg(l);(it[g]=it[g]||[]).push(k+(s.R[k]&&k!='Ra'&&k!='Ke'?'ᴿ':''))}return it}
+
+/* ---------- Vimshottari ---------- */
+const DL=['Ke','Ve','Su','Mo','Ma','Ra','Ju','Sa','Me'],DY={Ke:7,Ve:20,Su:6,Mo:10,Ma:7,Ra:18,Ju:16,Sa:19,Me:17},YR=365.25*864e5;
+function dasha(n){const m=n.s.L.Mo,fr=(m%(40/3))/(40/3),i0=nk(m)%9,o=[];let t=n.ms-fr*DY[DL[i0]]*YR;
+ for(let k=0;k<9;k++){const l=DL[(i0+k)%9],len=DY[l]*YR;o.push({l,s:t,e:t+len});t+=len}return o}
+function antars(md){let t=md.s;const i=DL.indexOf(md.l),r=[];
+ for(let k=0;k<9;k++){const l=DL[(i+k)%9],len=(md.e-md.s)*DY[l]/120;r.push({l,s:t,e:t+len});t+=len}return r}
+function curDasha(n,now){const D=dasha(n),md=D.find(x=>x.s<=now&&now<x.e)||D[D.length-1],A=antars(md);
+ return{D,md,A,ad:A.find(x=>x.s<=now&&now<x.e)||A[A.length-1]}}
+
+/* ---------- interpretation text ---------- */
+const MG=['Emotions and self-focus rise. Good for personal starts; guard against restlessness.','Money and speech are in focus. Avoid hasty words and impulsive spending.','Courage and initiative are up. Good for communication, short trips and effortful tasks.','Home and inner peace call. Rest and family time suit you; avoid big decisions on a restless mind.','Creative, romantic and studious. Children and learning are favoured; avoid speculation.','A strong day to clear obligations, build health routines and outlast competition.','Partnerships and meetings are highlighted. Cooperation works; avoid ego clashes.','A sensitive, intense day. Avoid risks, travel and arguments; research and reflection fit.','Fortune and guidance flow. Good for learning, mentors, long-term plans and practice.','Career visibility is high. Productive; take responsibility and expect recognition.','Gains and social support. Hopes move forward; excellent for networking.','Expenses and withdrawal. Rest, charity and retreat beat launches today.'];
+const GF={Su:[3,6,10,11],Mo:[1,3,6,7,10,11],Ma:[3,6,11],Me:[2,4,6,8,10,11],Ju:[2,5,7,9,11],Ve:[1,2,3,4,5,8,9,11,12],Sa:[3,6,11],Ra:[3,6,10,11],Ke:[3,6,11]};
+const TARA=['Janma: neutral, take care of health','Sampat: prosperous','Vipat: obstacles, go slow','Kshema: well-being','Pratyak: setbacks possible','Sadhana: achievement','Naidhana: caution','Mitra: friendly','Parama Mitra: very friendly'],TG=[0,1,-1,1,-1,1,-1,1,1];
+const HT=['self, health and identity','wealth, family and speech','effort, courage and skills','home, property and peace of mind','creativity, children and learning','work routine, service and health management','marriage and partnerships','transformation, research and sudden change','fortune, higher learning and mentors','career and public standing','gains and networks','expenses, foreign links and inner life'];
+const DT={Su:'authority, recognition and clarity of purpose',Mo:'emotional growth, public connection and family focus, with shifting moods',Ma:'energy, drive and property; courage rises, so manage haste and anger',Me:'intellect, trade, communication and skill-building',Ju:'expansion, wisdom, children and prosperity; generally a supportive time',Ve:'relationships, comfort, arts and income',Sa:'discipline and responsibility; results come slowly but last',Ra:'ambition, unconventional paths and foreign links; fast but unstable change',Ke:'detachment, spirituality and endings; an inward turn that loosens attachments'};
+
+/* ---------- state & entry ---------- */
+let S={P:[],a:0},mode=null,loc={lat:null,lon:null},res=[];
+try{S=JSON.parse(localStorage.getItem('jy'))||S}catch(e){}
+const save=()=>{try{localStorage.setItem('jy',JSON.stringify(S))}catch(e){}};
+const cur=()=>S.P[S.a];
+const myTz=()=>Intl.DateTimeFormat().resolvedOptions().timeZone;
+function entryUI(){const e=$('#entry');
+ if(!cur()&&mode===null)mode=-1;
+ if(mode===null){const p=cur();e.innerHTML=`<div class="row"><div class="sig">✦</div><div class="who"><b>${p.name}</b><span>${p.date} at ${p.time}, ${p.place}</span></div><button class="btn" data-a="edit">Change</button><button class="btn pri" data-a="add">Add person</button></div>`;return}
+ const p=mode>=0?S.P[mode]:{name:'',date:'',time:'',place:'',lat:'',lon:'',tz:myTz()};
+ e.innerHTML=`<div class="chips">${S.P.map((q,i)=>`<button class="btn ${i==S.a?'on':''}" data-a="pick" data-i="${i}">${q.name}</button>`).join('')}</div>
+ <form id="f"><label>Name<input id="f-n" value="${p.name}" required></label><label>Birth date<input id="f-d" type="date" value="${p.date}" required></label><label>Birth time<input id="f-t" type="time" value="${p.time}" required></label>
+ <label class="full">Birth place<span class="row"><input id="f-p" value="${p.place}" style="flex:1" placeholder="City, country"><button type="button" class="btn" data-a="find">Find</button></span></label>
+ <label class="full" id="f-r" hidden>Pick a match<select id="f-s"></select></label>
+ <label>Latitude<input id="f-la" type="number" step="any" value="${p.lat}" required></label><label>Longitude<input id="f-lo" type="number" step="any" value="${p.lon}" required></label><label>Time zone (name or UTC hours)<input id="f-z" value="${p.tz}" required></label>
+ <div class="full row"><button class="btn pri" type="submit">Save</button>${S.P.length?'<button type="button" class="btn" data-a="cancel">Cancel</button>':''}${mode>=0?'<button type="button" class="btn" data-a="del">Delete</button>':''}<span class="msg" id="msg"></span></div></form>`;
+ $('#f').onsubmit=ev=>{ev.preventDefault();submit()};
+ $('#f-s').onchange=ev=>{const r=res[ev.target.value];$('#f-la').value=r.latitude;$('#f-lo').value=r.longitude;$('#f-z').value=r.timezone||myTz();$('#f-p').value=[r.name,r.admin1,r.country].filter(Boolean).join(', ')}}
+const msg=t=>{const m=$('#msg');if(m)m.textContent=t};
+async function find(){const q=$('#f-p').value.trim();if(!q)return msg('Type a place first.');msg('Searching…');
+ try{const j=await(await fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&name='+encodeURIComponent(q))).json();res=j.results||[];
+  if(!res.length)return msg('No match. Enter latitude, longitude and time zone manually.');
+  $('#f-s').innerHTML=res.map((r,i)=>`<option value="${i}">${[r.name,r.admin1,r.country].filter(Boolean).join(', ')}</option>`).join('');$('#f-r').hidden=false;$('#f-s').onchange({target:$('#f-s')});msg('Choose the right match.')}
+ catch(e){msg('Search unavailable. Enter latitude, longitude and time zone manually.')}}
+function submit(){const p={name:$('#f-n').value.trim(),date:$('#f-d').value,time:$('#f-t').value,place:$('#f-p').value.trim()||'Custom location',lat:+$('#f-la').value,lon:+$('#f-lo').value,tz:$('#f-z').value.trim()};
+ try{toUTC(p)}catch(e){return msg('Time zone not recognised. Use a name like Asia/Kolkata or hours like 5.5.')}
+ if(mode>=0)S.P[mode]=p;else{S.P.push(p);S.a=S.P.length-1}
+ if(mode>=0)S.a=mode;mode=null;save();render()}
+document.addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+ if(a=='edit')mode=S.a;else if(a=='add')mode=-1;else if(a=='cancel')mode=null;
+ else if(a=='pick'){S.a=+b.dataset.i;mode=null;save()}
+ else if(a=='del'){S.P.splice(mode,1);S.a=0;mode=null;save()}
+ else if(a=='find')return find();
+ render()});
+$('#tabs').onclick=ev=>{const t=ev.target.dataset.t;if(!t)return;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));
+ for(const v of['today','chart','dasha'])$('#v-'+v).hidden=v!=t};
+
+/* ---------- views ---------- */
+const row=(k,s,asc)=>{const l=s.L[k];return`<tr><td>${PN[k]}</td><td>${SG[sg(l)]}</td><td>${dm(l)}${s.R[k]?' ᴿ':''}</td><td>${NK[nk(l)]} ${pd(l)}</td><td>${hs(sg(l),sg(asc))}</td></tr>`};
+function todayV(p,n){const now=Date.now(),jd=jdOf(now),s=sky(jd),L=loc.lat!=null?loc:{lat:p.lat,lon:p.lon,label:'birth place (location access not granted)'},la=lagna(jd,L.lat,L.lon,s.a);
+ const nM=sg(n.s.L.Mo),h=hs(sg(s.L.Mo),nM),c=curDasha(n,now);let fav=0,tr='';
+ for(const k of PK){const g=sg(s.L[k]),fm=hs(g,nM),ok=GF[k].includes(fm);fav+=ok;
+  tr+=`<tr><td>${PN[k]}${s.R[k]?' ᴿ':''}</td><td>${SG[g]} ${dm(s.L[k])}</td><td>${fm}</td><td>${hs(g,sg(n.asc))}</td><td class="${ok?'ok':'bad'}">${ok?'supportive':'testing'}</td></tr>`}
+ const moonOk=GF.Mo.includes(h),sc=fav+(moonOk?2:0),word=sc>=8?'Supportive':sc>=5?'Balanced':'Challenging',cls=sc>=8?'ok':sc>=5?'mid':'bad';
+ const el=nm(s.L.Mo-s.L.Su),ti=Math.floor(el/12)+1,t15=(ti-1)%15+1,tn=ti==15?'Purnima':ti==30?'Amavasya':(ti<=15?'Shukla':'Krishna')+' '+t15;
+ const ta=((nk(s.L.Mo)-nk(n.s.L.Mo)+27)%27)%9,satH=hs(sg(s.L.Sa),nM),juH=hs(sg(s.L.Ju),nM);
+ const lines=[`Moon is in ${SG[sg(s.L.Mo)]}, house ${h} from your natal Moon. ${MG[h-1]}`,
+  `Today's star is ${NK[nk(s.L.Mo)]} (pada ${pd(s.L.Mo)}), tara ${TARA[ta]}.`,
+  `You are in ${PN[c.md.l]}–${PN[c.ad.l]} dasha, which colours the day with ${DT[c.ad.l]}.`,
+  [12,1,2].includes(satH)?`Saturn is ${satH==12?'one sign before':satH==1?'over':'one sign after'} your natal Moon (Sade Sati). Expect slower progress; patience and routine help.`:`Saturn is in house ${satH} from your Moon, outside Sade Sati.`,
+  `Jupiter is in house ${juH} from your Moon, ${GF.Ju.includes(juH)?'a supportive placement for growth and guidance':'a neutral placement; steady effort over luck'}.`];
+ return`<div class="grid"><div class="card"><h2>Today for ${p.name}</h2><div class="score ${cls}">${word}</div><div class="note">${sc} of 11 supports, ${tn} tithi, ${WD[new Date().getDay()]}day</div>${lines.map(x=>`<p>${x}</p>`).join('')}</div>
+ <div class="card"><h2>Sky right now</h2>${chart(sg(la),items(s,sg(la)))}<p class="note">Ascendant ${SG[sg(la)]} ${dm(la)} at ${L.lat.toFixed(2)}, ${L.lon.toFixed(2)} (${L.label||'device location'}), ${new Date().toLocaleString()}. Houses count from the current ascendant.</p></div></div>
+ <div class="card tbl"><h2>Transits against your chart</h2><table><tr><th>Planet</th><th>Position</th><th>From Moon</th><th>From lagna</th><th>Gochar</th></tr>${tr}</table></div>`}
+function chartV(p,n){const s=n.s,a=sg(n.asc),g=nk(s.L.Mo);
+ return`<div class="card"><h2>Birth details</h2><p>Ascendant <b>${SG[a]} ${dm(n.asc)}</b>, Moon in <b>${SG[sg(s.L.Mo)]}</b>, ${NK[g]} pada ${pd(s.L.Mo)}. Lahiri ayanamsha ${Math.floor(s.a)}°${String(Math.floor(s.a%1*60)).padStart(2,'0')}′, whole-sign houses.</p></div>
+ <div class="grid"><div class="card"><h2>Lagna chart (D1)</h2>${chart(a,items(s,a))}</div><div class="card"><h2>Navamsa (D9)</h2>${chart(Math.floor(n.asc/(10/3))%12,items(s,Math.floor(n.asc/(10/3))%12,1))}</div></div>
+ <div class="card tbl"><h2>Planet positions</h2><table><tr><th>Planet</th><th>Sign</th><th>Degree</th><th>Nakshatra, pada</th><th>House</th></tr><tr><td>Ascendant</td><td>${SG[a]}</td><td>${dm(n.asc)}</td><td>${NK[nk(n.asc)]} ${pd(n.asc)}</td><td>1</td></tr>${PK.map(k=>row(k,s,n.asc)).join('')}</table></div>`}
+function dashaV(p,n){const now=Date.now(),c=curDasha(n,now),a=sg(n.asc),s=n.s,hm=hs(sg(s.L[c.md.l]),a),ha=hs(sg(s.L[c.ad.l]),a),nx=c.D[c.D.indexOf(c.md)+1];
+ return`<div class="grid"><div class="card"><h2>Now: ${PN[c.md.l]} mahadasha</h2><p>${fd(c.md.s)} to ${fd(c.md.e)}</p><p>${PN[c.md.l]} sits in your house ${hm}, so this long period centres on ${HT[hm-1]}. Its general tone is ${DT[c.md.l]}.</p></div>
+ <div class="card"><h2>Sub-period: ${PN[c.ad.l]} antardasha</h2><p>${fd(c.ad.s)} to ${fd(c.ad.e)}</p><p>${PN[c.ad.l]} is in house ${ha}, bringing ${HT[ha-1]} to the front, with ${DT[c.ad.l]}.</p>${nx?`<p class="note">Next mahadasha: ${PN[nx.l]} from ${fd(nx.s)}, ${DT[nx.l]}.</p>`:''}</div></div>
+ <div class="card tbl"><details open><summary>Antardashas in ${PN[c.md.l]} mahadasha</summary><table><tr><th>Sub-period</th><th>From</th><th>To</th></tr>${c.A.map(x=>`<tr${x==c.ad?' class="ok"':''}><td>${PN[c.md.l]}–${PN[x.l]}</td><td>${fd(x.s)}</td><td>${fd(x.e)}</td></tr>`).join('')}</table></details></div>
+ <div class="card tbl"><h2>Vimshottari mahadashas</h2><table><tr><th>Period</th><th>From</th><th>To</th><th>Focus</th></tr>${c.D.map(x=>`<tr${x==c.md?' class="ok"':''}><td>${PN[x.l]}</td><td>${fd(x.s)}</td><td>${fd(x.e)}</td><td>${HT[hs(sg(s.L[x.l]),a)-1]}</td></tr>`).join('')}</table><p class="note">First period starts from the Moon's nakshatra balance at birth. Focus shows the house the dasha lord occupies.</p></div>`}
+function render(){entryUI();const p=cur();
+ if(!p){for(const v of['today','chart','dasha'])$('#v-'+v).innerHTML='<div class="card">Add a birth date, time and place to begin.</div>';return}
+ let n;try{n=natal(p)}catch(e){return}
+ $('#v-today').innerHTML=todayV(p,n);$('#v-chart').innerHTML=chartV(p,n);$('#v-dasha').innerHTML=dashaV(p,n)}
+render();
+if(navigator.geolocation)navigator.geolocation.getCurrentPosition(g=>{loc={lat:g.coords.latitude,lon:g.coords.longitude,label:'your device location'};if(mode===null)render()},()=>{},{timeout:10000});
+setInterval(()=>{if(mode===null&&cur())render()},6e4);
+</script>
+</body>
+</html>
