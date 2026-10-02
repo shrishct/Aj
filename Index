@@ -35,6 +35,8 @@ input,select{font:inherit;color:var(--tx);background:rgba(0,0,0,.35);border:1px 
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{font-weight:400;color:var(--mu);text-align:left}th,td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.07)}
 .tbl{overflow-x:auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}#hero{text-align:center;margin-bottom:6px}
+.wh{width:100%;max-width:640px;display:block;margin:auto}.wh .pi{filter:drop-shadow(0 0 3px rgba(255,255,255,.35))}
 .ok{color:#7ee8b0}.bad{color:#ff9d8a}.mid{color:var(--go)}
 .note{color:var(--mu);font-size:12px}
 p{margin:.4em 0}
@@ -45,7 +47,7 @@ details summary{cursor:pointer;color:var(--cy)}
 </head>
 <body>
 <div class="wrap">
-<h1>JYOTISH<small>sidereal, Lahiri ayanamsha, whole-sign houses</small></h1>
+<header id="hero"><h1 class="sr">Jyotish</h1><div id="wheel"></div><p class="note" id="wcap"></p></header>
 <nav id="tabs"><button data-t="today" class="on">Today</button><button data-t="chart">Kundali</button><button data-t="dasha">Dasha &amp; outlook</button></nav>
 <section id="entry" class="card"></section>
 <main>
@@ -111,6 +113,35 @@ function chart(asc,items){let s='<svg viewBox="0 0 400 400" class="ch" role="img
  return s+'</svg>'}
 function items(s,asc,nav){const it={};(it[asc]=[]).push('Asc');
  for(const k of PK){const l=s.L[k],g=nav?Math.floor(l/(10/3))%12:sg(l);(it[g]=it[g]||[]).push(k+(s.R[k]&&k!='Ra'&&k!='Ke'?'ᴿ':''))}return it}
+
+/* ---------- sky wheel ---------- */
+const RS=['🐏','🐂','👫','🦀','🦁','👩','⚖️','🦂','🏹','🐊','🏺','🐟'],GL=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'].map(x=>x+'\uFE0E');
+const ORB={Mo:58,Me:80,Ve:102,Su:124,Ma:146,Ju:168,Sa:190,Ra:212,Ke:212};
+const rays=[0,1,2,3,4,5,6,7].map(i=>{const a=i*45;return`<line x1="${(9*cs(a)).toFixed(1)}" y1="${(9*sn(a)).toFixed(1)}" x2="${(13*cs(a)).toFixed(1)}" y2="${(13*sn(a)).toFixed(1)}"/>`}).join('');
+const ICON={Su:`<g stroke="#ffd76a" stroke-width="1.6">${rays}</g><circle r="7" fill="#ffc94d"/>`,
+Mo:'<path d="M0-9A9 9 0 1 0 0 9A6 9 0 1 1 0-9Z" fill="#eef1fb"/>',
+Ma:'<circle r="8" fill="#e5604d"/><circle cx="-2" cy="-2" r="2" fill="#a53a2c"/>',
+Me:'<circle r="6" fill="#a9bfb2"/>',
+Ve:'<circle r="8" fill="#f7e6b8"/>',
+Ju:'<circle r="10" fill="#e3bd8e"/><path d="M-9.2-4H9.2M-10 1H10M-7.9 6H7.9" stroke="#b98558" stroke-width="2"/>',
+Sa:'<circle r="7" fill="#dcc88e"/><ellipse rx="14" ry="4" transform="rotate(-20)" fill="none" stroke="#e6d39b" stroke-width="2"/>',
+Ra:'<circle r="9" fill="#2b2160" stroke="#9d8cff"/><text y="4" text-anchor="middle" font-size="12" fill="#fff">☊</text>',
+Ke:'<circle r="9" fill="#3a1f2a" stroke="#ff9d8a"/><text y="4" text-anchor="middle" font-size="12" fill="#fff">☋</text>'};
+function wheel(s,asc,u){const C=300,P=(r,t)=>[C+r*Math.cos(t*R),C-r*Math.sin(t*R)],T=l=>180+l-asc,f=n=>n.toFixed(1),as=Math.floor(asc/30),tint=['#ff8a5c','#9bd36a','#ffe27a','#6fb7ff'];
+ let o=`<svg viewBox="0 0 600 600" class="wh" role="img" aria-label="Sky wheel: zodiac ring, horizon line, Earth at the centre and planetary orbits"><defs><radialGradient id="ge${u}" cx=".35" cy=".3"><stop offset="0" stop-color="#7fd0ff"/><stop offset="1" stop-color="#14508a"/></radialGradient></defs><path d="M75 300A225 225 0 0 0 525 300Z" fill="#000" opacity=".28"/>`;
+ for(let i=0;i<12;i++){const a=T(i*30),b=T(i*30+30),[x1,y1]=P(275,a),[x2,y2]=P(275,b),[x3,y3]=P(225,b),[x4,y4]=P(225,a),m=T(i*30+15),[ex,ey]=P(258,m),[gx,gy]=P(236,m);
+  o+=`<path d="M${f(x1)} ${f(y1)}A275 275 0 0 0 ${f(x2)} ${f(y2)}L${f(x3)} ${f(y3)}A225 225 0 0 1 ${f(x4)} ${f(y4)}Z" fill="${tint[i%4]}" fill-opacity=".1" stroke="#74e6f0" stroke-opacity=".4"><title>${SG[i]}, house ${hs(i,as)}</title></path>`+
+  `<text x="${f(ex)}" y="${f(ey)}" font-size="19" text-anchor="middle" dominant-baseline="central">${RS[i]}</text><text x="${f(gx)}" y="${f(gy)}" font-size="12" fill="#f2cf8b" text-anchor="middle" dominant-baseline="central">${GL[i]}<tspan fill="#8f95b2" font-size="9"> ${hs(i,as)}</tspan></text>`}
+ for(const r of[58,80,102,124,146,168,190])o+=`<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="#fff" stroke-opacity=".13" stroke-dasharray="3 5"/>`;
+ o+=`<circle cx="${C}" cy="${C}" r="212" fill="none" stroke="#9d8cff" stroke-opacity=".3" stroke-dasharray="1 6"/><circle cx="${C}" cy="${C}" r="225" fill="none" stroke="#74e6f0" stroke-opacity=".55"/>`+
+ `<line x1="25" y1="${C}" x2="575" y2="${C}" stroke="#f2cf8b" stroke-width="1.5"/><text x="13" y="${C-6}" font-size="10" fill="#f2cf8b" text-anchor="middle">Asc</text><text x="587" y="${C-6}" font-size="10" fill="#f2cf8b" text-anchor="middle">Dsc</text>`+
+ `<circle cx="${C}" cy="${C}" r="26" fill="url(#ge${u})" stroke="#74e6f0"/><ellipse cx="292" cy="292" rx="9" ry="6" fill="#4cc27a" transform="rotate(-20 292 292)"/><ellipse cx="310" cy="310" rx="8" ry="5" fill="#4cc27a"/><ellipse cx="311" cy="289" rx="4" ry="3" fill="#4cc27a"/>`;
+ for(const k of PK){const[x,y]=P(ORB[k],T(s.L[k])),rt=s.R[k]&&k!='Ra'&&k!='Ke'?'ᴿ':'';
+  o+=`<g class="pi" transform="translate(${f(x)} ${f(y)})"><title>${PN[k]}, ${SG[sg(s.L[k])]} ${dm(s.L[k])}${rt?', retrograde':''}</title>${ICON[k]}<text x="15" y="3" font-size="9" fill="#e9ebf5">${k}${rt}</text></g>`}
+ return o+'</svg>'}
+function hero(){const p=cur(),L=loc.lat!=null?loc:p?{lat:p.lat,lon:p.lon}:{lat:28.61,lon:77.21},jd=jdOf(Date.now()),s=sky(jd),la=lagna(jd,L.lat,L.lon,s.a);
+ $('#wheel').innerHTML=wheel(s,la,'h');
+ $('#wcap').textContent='Jyotish sky now: Earth at the centre, horizon through it, ascendant '+SG[sg(la)]+' '+dm(la)+' on the left. Sidereal, Lahiri ayanamsha, whole-sign houses.'}
 
 /* ---------- Vimshottari ---------- */
 const DL=['Ke','Ve','Su','Mo','Ma','Ra','Ju','Sa','Me'],DY={Ke:7,Ve:20,Su:6,Mo:10,Ma:7,Ra:18,Ju:16,Sa:19,Me:17},YR=365.25*864e5;
@@ -184,6 +215,7 @@ function todayV(p,n){const now=Date.now(),jd=jdOf(now),s=sky(jd),L=loc.lat!=null
  <div class="card tbl"><h2>Transits against your chart</h2><table><tr><th>Planet</th><th>Position</th><th>From Moon</th><th>From lagna</th><th>Gochar</th></tr>${tr}</table></div>`}
 function chartV(p,n){const s=n.s,a=sg(n.asc),g=nk(s.L.Mo);
  return`<div class="card"><h2>Birth details</h2><p>Ascendant <b>${SG[a]} ${dm(n.asc)}</b>, Moon in <b>${SG[sg(s.L.Mo)]}</b>, ${NK[g]} pada ${pd(s.L.Mo)}. Lahiri ayanamsha ${Math.floor(s.a)}°${String(Math.floor(s.a%1*60)).padStart(2,'0')}′, whole-sign houses.</p></div>
+ <div class="card"><h2>Sky wheel at birth</h2>${wheel(s,n.asc,'n')}<p class="note">Signs run counter-clockwise from the ascendant at the left of the horizon. The gold symbol is the sign, the small number its house. Planets sit on the classical orbits (Moon nearest Earth, Saturn farthest), with Rahu and Ketu on the dotted outer orbit.</p></div>
  <div class="grid"><div class="card"><h2>Lagna chart (D1)</h2>${chart(a,items(s,a))}</div><div class="card"><h2>Navamsa (D9)</h2>${chart(Math.floor(n.asc/(10/3))%12,items(s,Math.floor(n.asc/(10/3))%12,1))}</div></div>
  <div class="card tbl"><h2>Planet positions</h2><table><tr><th>Planet</th><th>Sign</th><th>Degree</th><th>Nakshatra, pada</th><th>House</th></tr><tr><td>Ascendant</td><td>${SG[a]}</td><td>${dm(n.asc)}</td><td>${NK[nk(n.asc)]} ${pd(n.asc)}</td><td>1</td></tr>${PK.map(k=>row(k,s,n.asc)).join('')}</table></div>`}
 function dashaV(p,n){const now=Date.now(),c=curDasha(n,now),a=sg(n.asc),s=n.s,hm=hs(sg(s.L[c.md.l]),a),ha=hs(sg(s.L[c.ad.l]),a),nx=c.D[c.D.indexOf(c.md)+1];
@@ -191,7 +223,7 @@ function dashaV(p,n){const now=Date.now(),c=curDasha(n,now),a=sg(n.asc),s=n.s,hm
  <div class="card"><h2>Sub-period: ${PN[c.ad.l]} antardasha</h2><p>${fd(c.ad.s)} to ${fd(c.ad.e)}</p><p>${PN[c.ad.l]} is in house ${ha}, bringing ${HT[ha-1]} to the front, with ${DT[c.ad.l]}.</p>${nx?`<p class="note">Next mahadasha: ${PN[nx.l]} from ${fd(nx.s)}, ${DT[nx.l]}.</p>`:''}</div></div>
  <div class="card tbl"><details open><summary>Antardashas in ${PN[c.md.l]} mahadasha</summary><table><tr><th>Sub-period</th><th>From</th><th>To</th></tr>${c.A.map(x=>`<tr${x==c.ad?' class="ok"':''}><td>${PN[c.md.l]}–${PN[x.l]}</td><td>${fd(x.s)}</td><td>${fd(x.e)}</td></tr>`).join('')}</table></details></div>
  <div class="card tbl"><h2>Vimshottari mahadashas</h2><table><tr><th>Period</th><th>From</th><th>To</th><th>Focus</th></tr>${c.D.map(x=>`<tr${x==c.md?' class="ok"':''}><td>${PN[x.l]}</td><td>${fd(x.s)}</td><td>${fd(x.e)}</td><td>${HT[hs(sg(s.L[x.l]),a)-1]}</td></tr>`).join('')}</table><p class="note">First period starts from the Moon's nakshatra balance at birth. Focus shows the house the dasha lord occupies.</p></div>`}
-function render(){entryUI();const p=cur();
+function render(){entryUI();hero();const p=cur();
  if(!p){for(const v of['today','chart','dasha'])$('#v-'+v).innerHTML='<div class="card">Add a birth date, time and place to begin.</div>';return}
  let n;try{n=natal(p)}catch(e){return}
  $('#v-today').innerHTML=todayV(p,n);$('#v-chart').innerHTML=chartV(p,n);$('#v-dasha').innerHTML=dashaV(p,n)}
